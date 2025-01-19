@@ -24,10 +24,12 @@ import com.example.nagoyameshi.repository.RestaurantRepository;
 public class RestaurantService {
    private final RestaurantRepository restaurantRepository;
    private final CategoryRestaurantService categoryRestaurantService;
+   private final RegularHolidayRestaurantService regularHolidayRestaurantService;
 
-   public RestaurantService(RestaurantRepository restaurantRepository, CategoryRestaurantService categoryRestaurantService) {
+   public RestaurantService(RestaurantRepository restaurantRepository, CategoryRestaurantService categoryRestaurantService, RegularHolidayRestaurantService regularHolidayRestaurantService) {
        this.restaurantRepository = restaurantRepository;
        this.categoryRestaurantService = categoryRestaurantService;
+       this.regularHolidayRestaurantService = regularHolidayRestaurantService;
       
    }
 
@@ -61,6 +63,7 @@ public class RestaurantService {
        Restaurant restaurant = new Restaurant();
        MultipartFile imageFile = restaurantRegisterForm.getImageFile();
        List<Integer> categoryIds = restaurantRegisterForm.getCategoryIds();
+       List<Integer> regularHolidayIds = restaurantRegisterForm.getRegularHolidayIds();
        
 
 
@@ -86,6 +89,9 @@ public class RestaurantService {
        
        if (categoryIds != null) {
            categoryRestaurantService.createCategoriesRestaurants(categoryIds, restaurant);
+       }
+       if (regularHolidayIds != null) {
+           regularHolidayRestaurantService.createRegularHolidaysRestaurants(regularHolidayIds, restaurant);
        } 
 
    }
@@ -94,6 +100,7 @@ public class RestaurantService {
    public void updateRestaurant(RestaurantEditForm restaurantEditForm, Restaurant restaurant) {
        MultipartFile imageFile = restaurantEditForm.getImageFile();
        List<Integer> categoryIds = restaurantEditForm.getCategoryIds();
+       List<Integer> regularHolidayIds = restaurantEditForm.getRegularHolidayIds();
        
 
        if (!imageFile.isEmpty()) {
@@ -117,6 +124,7 @@ public class RestaurantService {
        restaurantRepository.save(restaurant);
        
        categoryRestaurantService.syncCategoriesRestaurants(categoryIds, restaurant);
+       regularHolidayRestaurantService.syncRegularHolidaysRestaurants(regularHolidayIds, restaurant);
        
    }
 

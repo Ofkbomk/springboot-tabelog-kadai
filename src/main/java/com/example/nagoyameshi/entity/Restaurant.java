@@ -69,6 +69,6 @@ public class Restaurant {
    
    @OneToMany(mappedBy = "restaurant", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
    @OrderBy("regularHoliday.id ASC")
-   private List<RegularHolidayRestaurant> regularHolidaysRestaurants; 
-   
+   private List<RegularHolidayRestaurant> regularHolidaysRestaurants;    
+    
 }
