@@ -14,6 +14,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.example.nagoyameshi.entity.User;
 import com.example.nagoyameshi.entity.VerificationToken;
 import com.example.nagoyameshi.event.SignupEventPublisher;
+import com.example.nagoyameshi.form.PasswordResetForm;
+import com.example.nagoyameshi.form.SendEmailInputForm;
 import com.example.nagoyameshi.form.SignupForm;
 import com.example.nagoyameshi.service.UserService;
 import com.example.nagoyameshi.service.VerificationTokenService;
@@ -92,4 +94,84 @@ public class AuthController {
 
        return "auth/verify";
    } 
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+	@GetMapping("/password/sendmail")
+	public String passwordSendMail(Model model) {
+		model.addAttribute("sendEmailInputForm", new SendEmailInputForm());
+		
+		return "password/sendmail";
+	}
+	
+	@PostMapping("/password/sendmail")
+	public String passwordSendMail(@ModelAttribute @Validated SendEmailInputForm sendEmailInputForm, BindingResult bindingResult, RedirectAttributes redirectAttributes, HttpServletRequest httpServletRequest, Model model) {
+		// メールアドレスが登録されてなければ、BindingResultオブジェクトにエラー内容を追加する
+		if (!userService.isEmailRegistered(sendEmailInputForm.getEmail())) {
+			FieldError fieldError = new FieldError(bindingResult.getObjectName(), "email", "入力されたメールアドレスは登録されていません。");
+			bindingResult.addError(fieldError);
+		}
+		
+		if (bindingResult.hasErrors()) {
+			return "password/sendmail";
+		}
+		
+		String requestUrl = new String(httpServletRequest.getRequestURL());
+		
+		signupEventPublisher.publishPasswordResetEvent(userService.findUserByEmail(sendEmailInputForm.getEmail()), requestUrl.replace("/sendmail", ""));
+		redirectAttributes.addFlashAttribute("successMessage", "ご入力いただいたメールアドレスにメールを送信しました。メールに記載されているリンクをクリックし、パスワード再設定を行ってください。");
+					
+		return "redirect:/";						
+	}
+	
+	@GetMapping("/password/verify")
+	public String passwordVerify(@RequestParam(name = "token") String token, RedirectAttributes redirectAttributes, Model model) {
+		VerificationToken verificationToken = verificationTokenService.findVerificationTokenByToken(token);
+		
+		if (verificationToken == null) {
+			redirectAttributes.addFlashAttribute("errorMessage", "メールアドレスの認証が確認できませんでした。再度入力しなおしてください。");
+			return "redirect:/";
+		} 
+		
+		User user = verificationToken.getUser();
+		PasswordResetForm passwordResetForm = new PasswordResetForm();
+		passwordResetForm.setUserId(user.getId());
+		
+		model.addAttribute("passwordResetForm", passwordResetForm);
+		return "password/reset";
+		
+	}
+	
+	@PostMapping("/password/reset")
+	public String passwordReset(@ModelAttribute @Validated PasswordResetForm passwordResetForm, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {		
+				
+		// パスワードとパスワード（確認用）の入力値が一致しなければ、BindingResultオブジェクトにエラー内容を追加する
+		if (!userService.isSamePassword(passwordResetForm.getPassword(), passwordResetForm.getPasswordConfirmation())) {
+			FieldError fieldError = new FieldError(bindingResult.getObjectName(), "password", "パスワードが一致しません。");
+			bindingResult.addError(fieldError);
+			model.addAttribute("passwordResetForm", passwordResetForm);
+			return "password/reset";
+		}
+
+		model.addAttribute("passwordResetForm", passwordResetForm);
+		userService.resetPassword(passwordResetForm);
+		
+		redirectAttributes.addFlashAttribute("successMessage", "パスワードの再設定が完了しました。");
+			
+		return "redirect:/";
+	}
+	
 }
