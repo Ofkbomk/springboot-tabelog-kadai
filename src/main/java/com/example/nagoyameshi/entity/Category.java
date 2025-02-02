@@ -27,6 +27,6 @@ public class Category {
    @Column(name = "name")
    private String name;
    
-   @OneToMany(mappedBy = "category", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+   @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
    private List<CategoryRestaurant> categoriesRestaurants;
 }
